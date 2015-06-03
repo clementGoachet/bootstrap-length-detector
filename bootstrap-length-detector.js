@@ -19,20 +19,20 @@
 
 
   $.fn.extend({
-    maxlength: function (options, callback) {
+    lengthDetector: function (options, callback) {
       var documentBody = $('body'),
         defaults = {
           showOnReady: false, // true to always show when indicator is ready
           alwaysShow: false, // if true the indicator it's always shown.
           threshold: 10, // Represents how many chars left are needed to show up the counter
-          warningClass: 'label label-success',
+          interval: { 50:'success' }, // Represents every interval with their class
+          warningClass: 'label label-warning',
           limitReachedClass: 'label label-important label-danger',
           separator: ' / ',
           preText: '',
           postText: '',
           showMaxLength: true,
           placement: 'bottom',
-          message: null, // an alternative way to provide the message text
           showCharsTyped: true, // show the number of characters typed and not the number of characters remaining
           validate: false, // if the browser doesn't support the maxlength attribute, attempt to type more than
           // the indicated chars, will be prevented.
@@ -150,6 +150,16 @@
       }
 
       /**
+       * Returns a bootstrap class label from the name
+       * 
+       * @param  {[String]} color [bootstrap name]
+       * @return {[String]}       [Boostrap label]
+       */
+      function labelBoostrap(color){
+        return 'label label-'+color;
+      }
+
+      /**
        * When called displays the indicator.
        *
        * @param indicator
@@ -180,16 +190,12 @@
       * @param typedChars
       * @return String
       */
-      function updateMaxLengthHTML(currentInputText, maxLengthThisInput, typedChars) {
+      function updateMaxLengthHTML(maxLengthThisInput, typedChars) {
         var output = '';
         if (options.message) {
-          if (typeof options.message === 'function') {
-            output = options.message(currentInputText, maxLengthThisInput);
-          } else {
-            output = options.message.replace('%charsTyped%', typedChars)
+          output = options.message.replace('%charsTyped%', typedChars)
               .replace('%charsRemaining%', maxLengthThisInput - typedChars)
               .replace('%charsTotal%', maxLengthThisInput);
-          }
         } else {
           if (options.preText) {
             output += options.preText;
@@ -211,6 +217,66 @@
       }
 
       /**
+       * Get the interval where the currentLength is
+       * 
+       * @param  {[array]} arrayInterval
+       * @param  {[int]}   currentLength
+       * @return {[array]}
+       */
+      function getCurrentInterval(arrayInterval, currentLength){
+        var currentInterval = [];        
+
+        var previousMinChars = 0;
+        var nextMinChars;
+        var finded = 0; // used to get interval between index and index+1
+
+        for (var index in arrayInterval) {
+          if (finded == 1 && currentLength <= index){
+            nextMinChars = index;
+            finded = 0;
+            break;
+          } else {
+            nextMinChars = 'undefined';
+          }
+          if (currentLength > index ) {
+            previousMinChars = index;
+            finded = 1;
+          } 
+        }
+
+        // Initate Interval
+        if (previousMinChars == 0) {
+          for (var index in arrayInterval) {
+            nextMinChars = index;
+            break;
+          }
+        }
+
+        currentInterval[0] = previousMinChars;
+        currentInterval[1] = nextMinChars;
+
+        return currentInterval;
+      }
+
+
+
+      /**
+       * Convert a JSON into an array
+       * 
+       * @param  {[JSON]}
+       * @return {[array]}
+       */
+      function objectToArray(object){
+        var array = [];
+
+        $.map(object, function(value, key) {
+          array[key] = value;
+        });
+        return array;
+      }
+
+
+      /**
        * This function updates the value of the counter in the indicator.
        * Wants as parameters: the number of remaining chars, the element currently managed,
        * the maxLength for the current input and the indicator generated for it.
@@ -220,21 +286,49 @@
        * @param maxLengthCurrentInput
        * @param maxLengthIndicator
        */
-      function manageRemainingVisibility(remaining, currentInput, maxLengthCurrentInput, maxLengthIndicator) {
-        if (maxLengthIndicator) {
-          maxLengthIndicator.html(updateMaxLengthHTML(currentInput.val(), maxLengthCurrentInput, (maxLengthCurrentInput - remaining)));
+      function manageRemainingVisibility(remaining, currentInput, maxLengthCurrentInput, maxLengthIndicator, currentInterval) {
+        maxLengthIndicator.html(updateMaxLengthHTML(maxLengthCurrentInput, (maxLengthCurrentInput - remaining)));
+        
+        var interval = options.interval,
+          currentLength = inputLength(currentInput),
+          currentInterval = getCurrentInterval(objectToArray(interval),currentLength),
+          previousMinChars = currentInterval[0],
+          nextMinChars = currentInterval[1];
 
-          if (remaining > 0) {
+        if (remaining > 0) {
+
+          // Default
+          if (nextMinChars == 'undefined') {
             if (charsLeftThreshold(currentInput, options.threshold, maxLengthCurrentInput)) {
-              showRemaining(currentInput, maxLengthIndicator.removeClass(options.limitReachedClass).addClass(options.warningClass));
+              showRemaining(currentInput, maxLengthIndicator.removeClass(options.limitReachedClass).removeClass(options.warningClass).addClass(labelBoostrap(options.warningClass)));
             } else {
               hideRemaining(currentInput, maxLengthIndicator);
             }
-          } else {
-            showRemaining(currentInput, maxLengthIndicator.removeClass(options.warningClass).addClass(options.limitReachedClass));
+          } 
+          // When interval is defined
+          else {
+            // Good length
+            if (currentLength <= nextMinChars) {
+              if (charsLeftThreshold(currentInput, options.threshold, maxLengthCurrentInput)) {
+                showRemaining(currentInput, maxLengthIndicator.removeClass(options.limitReachedClass).removeClass(options.warningClass).addClass(labelBoostrap(options.interval[nextMinChars])));
+              } else {
+                hideRemaining(currentInput, maxLengthIndicator);
+              }
+            } // Low length
+            else if (currentLength >= previousMinChars){
+              if (charsLeftThreshold(currentInput, options.threshold, maxLengthCurrentInput)) {
+                showRemaining(currentInput, maxLengthIndicator.removeClass(options.limitReachedClass).removeClass(options.middleClass).addClass(labelBoostrap(options.interval[previousMinChars])));
+              } else {
+                hideRemaining(currentInput, maxLengthIndicator);
+              }
+            }
           }
         }
-
+        // Max length
+        else {
+          showRemaining(currentInput, maxLengthIndicator.removeClass(options.warningClass).removeClass(options.middleClass).addClass(options.limitReachedClass));
+        }
+        
         if (options.allowOverMax) {
           // class to use for form validation on custom maxlength attribute
           if (remaining < 0) {
@@ -244,7 +338,7 @@
           }
         }
       }
-
+  
       /**
        * This function returns an object containing all the
        * informations about the position of the current input
@@ -410,11 +504,11 @@
         }
 
         function firstInit() {
-          var maxlengthContent = updateMaxLengthHTML(currentInput.val(), maxLengthCurrentInput, '0');
+          var maxlengthContent = updateMaxLengthHTML(maxLengthCurrentInput, '0');
           maxLengthCurrentInput = getMaxLength(currentInput);
 
           if (!maxLengthIndicator) {
-            maxLengthIndicator = $('<span class="bootstrap-maxlength"></span>').css({
+            maxLengthIndicator = $('<span class="bootstrap-length-detector"></span>').css({
               display: 'none',
               position: 'absolute',
               whiteSpace: 'nowrap',
@@ -459,7 +553,7 @@
           });
         }
 
-        currentInput.on('maxlength.reposition', function () {
+        currentInput.on('lengthDetector.reposition', function () {
           place(currentInput, maxLengthIndicator);
         });
 
