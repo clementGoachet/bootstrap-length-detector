@@ -28,7 +28,6 @@
         options = {};
       }
       var jsOptions = options;
-      options = $.extend({}, loadParams(), jsOptions);
 
       /**
        * Load params
@@ -57,6 +56,7 @@
        * @return JSON
        */
       function getOptions(input) {
+
         var dataOptions = input.data();
         // Interval
         if ($.type(input.data('interval-1')) !== 'undefined'){
@@ -67,22 +67,19 @@
             if ($.type(input.data('interval-'+i)) === 'undefined') {
               break;
             }
-            var interval = input.data('interval-'+i);
-            newIntervals.interval = {};
-            newIntervals.interval[i-1] = {};
+            var interval = input.data('interval-'+i).split(' ');
+            newIntervals[i-1] = {};
+            newIntervals[i-1].limitChars = interval[0];
+            newIntervals[i-1].bsClass = interval[1];
 
-            // Limit chars
-            newIntervals.interval[i-1].limitChars = interval.substr(0, interval.search(/ /));
-            interval = interval.replace(newIntervals.interval[i-1].limitChars+' ', '');
-
-            // Style
-            newIntervals.interval[i-1].bsClass = $.trim(interval.match(/^([\w\d-]*|#.{3,6}|rgb\(.*\)|{.*})\s/)[0]);
-            
             // Message
-            newIntervals.interval[i-1].message = interval.replace(newIntervals.interval[i-1].bsClass+' ', '');
+            interval.shift();
+            interval.shift();
+            newIntervals[i-1].message = interval.join(' ');
+
             i++;
           }
-          dataOptions = $.extend({}, dataOptions, newIntervals); 
+          dataOptions = $.extend(input.data(), newIntervals); 
         }
         // All others options             
         return dataOptions;
@@ -96,6 +93,7 @@
       */
       function inputLength(input) {
         var text = input.val();
+
         if (options.twoCharLinebreak) {
           // Count all line breaks as 2 characters
           text = text.replace(/\r(?!\n)|\n(?!\r)/g, '\r\n');
@@ -167,7 +165,6 @@
        * @return {number}
        */
       function charsLeftThreshold(input, thereshold, maxlength) {
-
         var output = true;
         if (!options.alwaysShow && (maxlength - inputLength(input) > thereshold)) {
           output = false;
@@ -196,6 +193,7 @@
        */
       function style(styleOption, maxLengthIndicator){
         var currentClass;
+
         // Style sheet
         if ($.type(styleOption) === 'object') {
 
@@ -212,7 +210,7 @@
           });
 
           // Color hexa for background
-          if (styleOption.search(/^(#|rgb\()/) !== -1 ) {
+          if (styleOption.search(/^#/) !== -1) {
             maxLengthIndicator.css('background-color', styleOption);
             currentClass = 'label';
           } 
@@ -284,11 +282,9 @@
             output += options.postText;
           }
         }
-        
-        if ($.type(currentIntervalMessage) !== 'undefined' && !isMessageEmpty(currentIntervalMessage)) {
+        if (isMessageEmpty(currentIntervalMessage)) {
           output += '. '+currentIntervalMessage;
         }
-
         return output;
       }
 
@@ -357,9 +353,9 @@
 
       function isMessageEmpty(message){
         if ($.trim(message) === '') {
-          return true;
-        } else {
           return false;
+        } else {
+          return true;
         }
       }
 
@@ -374,22 +370,17 @@
        * @param maxLengthIndicator
        */
       function manageRemainingVisibility(remaining, currentInput, maxLengthCurrentInput, maxLengthIndicator) {
-        
         if (maxLengthIndicator) {
-          var currentInterval = 'undefined';
+          var interval = options.interval,
+              currentLength = inputLength(currentInput),
+              currentInterval = getCurrentInterval(interval,currentLength);
 
-          if (options.interval !== '') {
-            currentInterval = getCurrentInterval(options.interval,inputLength(currentInput));
-            maxLengthIndicator.html(updateMaxLengthHTML(currentInput.val(), maxLengthCurrentInput, (maxLengthCurrentInput - remaining), currentInterval.message));
-          } else {
-            maxLengthIndicator.html(updateMaxLengthHTML(currentInput.val(), maxLengthCurrentInput, (maxLengthCurrentInput - remaining)));
-          }
-          
+          maxLengthIndicator.html(updateMaxLengthHTML(currentInput.val(), maxLengthCurrentInput, (maxLengthCurrentInput - remaining), currentInterval.message));
+
           if (remaining > 0) {
-            
-            // Default
-            if (currentInterval === 'undefined' || options.interval === '') {
 
+            // Default
+            if (currentInterval === 'undefined') {
               if (charsLeftThreshold(currentInput, options.threshold, maxLengthCurrentInput)) {
                 var currentBsClass = style(options.defaultClass, maxLengthIndicator);
                 showRemaining(currentInput, maxLengthIndicator.removeClass(options.previousClass).addClass(currentBsClass));
@@ -568,7 +559,6 @@
        */
       function getMaxLength(currentInput) {
         var attr = 'maxlength';
-
         if (options.allowOverMax) {
           attr = 'data-bs-mxl';
         }
@@ -596,7 +586,8 @@
 
           var configOptions = loadParams(currentInput.data('length-detector-class'));
           var dataOptions = getOptions(currentInput);
-          options = $.extend({}, options, configOptions, dataOptions, jsOptions);
+          options = $.extend({}, options, configOptions, dataOptions);  
+          options = $.extend({}, options, jsOptions);
 
           var maxlengthContent = updateMaxLengthHTML(currentInput.val(), maxLengthCurrentInput, '0', '');
           maxLengthCurrentInput = getMaxLength(currentInput);
@@ -611,6 +602,7 @@
               zIndex: 1099
             }).html(maxlengthContent);
           }
+
           // We need to detect resizes if we are dealing with a textarea:
           if (currentInput.is('textarea')) {
             currentInput.data('maxlenghtsizex', currentInput.outerWidth());
@@ -636,7 +628,6 @@
           var remaining = remainingChars(currentInput, getMaxLength(currentInput));
           manageRemainingVisibility(remaining, currentInput, maxLengthCurrentInput, maxLengthIndicator);
           place(currentInput, maxLengthIndicator);
-
         }
 
         if (options.showOnReady) {
