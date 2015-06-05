@@ -1,7 +1,7 @@
 {
-  "name": "bootstrap-maxlength",
+  "name": "bootstrap-length-detector",
   "version": "1.6.0",
-  "main": "bootstrap-maxlength.js",
+  "main": "bootstrap-length-detector.js",
   "ignore": [
     "**/.*"
   ],

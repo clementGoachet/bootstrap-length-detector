@@ -1,12 +1,6 @@
 (function ($) {
   'use strict';
-  /**
-   * We need an event when the elements are destroyed
-   * because if an input is removed, we have to remove the
-   * maxlength object associated (if any).
-   * From:
-   * http://stackoverflow.com/questions/2200494/jquery-trigger-event-when-an-element-is-removed-from-the-dom
-   */
+
   if (!$.event.special.destroyed) {
     $.event.special.destroyed = {
       remove: function (o) {
@@ -20,35 +14,110 @@
 
   $.fn.extend({
     lengthDetector: function (options, callback) {
-      var documentBody = $('body'),
-        defaults = {
-          showOnReady: false, // true to always show when indicator is ready
-          alwaysShow: false, // if true the indicator it's always shown.
-          threshold: 10, // Represents how many chars left are needed to show up the counter
-          interval: { 50:'success' }, // Represents every interval with their class
-          warningClass: 'label label-warning',
-          limitReachedClass: 'label label-important label-danger',
-          separator: ' / ',
-          preText: '',
-          postText: '',
-          showMaxLength: true,
-          placement: 'bottom',
-          showCharsTyped: true, // show the number of characters typed and not the number of characters remaining
-          validate: false, // if the browser doesn't support the maxlength attribute, attempt to type more than
-          // the indicated chars, will be prevented.
-          utf8: false, // counts using bytesize rather than length. eg: '£' is counted as 2 characters.
-          appendToParent: false, // append the indicator to the input field's parent instead of body
-          twoCharLinebreak: true,  // count linebreak as 2 characters to match IE/Chrome textarea validation. As well as DB storage.
-          allowOverMax: false  // false = use maxlength attribute and browswer functionality.
-          // true = removes maxlength attribute and replaces with 'data-bs-mxl'.
-          // Form submit validation is handled on your own.  when maxlength has been exceeded 'overmax' class added to element
-        };
+        
+      var documentBody = $('body');
 
       if ($.isFunction(options) && !callback) {
         callback = options;
         options = {};
       }
-      options = $.extend(defaults, options);
+      var jsOptions = options;
+      options = $.extend({}, $.configs.defaults, options);
+
+
+      /**
+       * Load params from config files
+       * 
+       * @return JSON
+       */
+      function getConfigOptions(inputLengthDetectorClass) {
+        var defaults;
+        if ($.configs) {
+
+          if ($.type(inputLengthDetectorClass) === 'undefined') {
+            defaults = $.configs.defaults;
+          } else if ($.type(inputLengthDetectorClass) === 'string') {
+            if ($.type($.configs[inputLengthDetectorClass]) !== 'undefined') {
+              defaults = $.configs[inputLengthDetectorClass];
+            } else {
+              console.error('No such configs in config files.');
+            }
+          }
+        } else {
+          $.error('jQuery.configs rules are not loaded, plz add configuration files to the page');
+        }
+        return defaults;
+      }
+
+      /**
+       * Get options from input
+       * 
+       * @return JSON
+       */
+      function getDataOptions(input) {
+        var dataOptions = input.data();
+
+        var newIntervals = {},
+            i = 0;      
+            newIntervals.interval = {};
+
+        $.each(input.data(), function(key, value){
+
+          // Interval
+          if (key.search(/interval\d/) !== -1){
+            newIntervals.interval[i] = intervalStringToObject(value);
+            i++;
+          } 
+          // Unset interval in data options"
+          else if (key === 'interval') {
+            dataOptions.interval = '';
+            console.error('Interval in data attributes is not set correctly.');
+          }
+        });
+        
+        // Erase configs interval and set the data interval
+        if (!$.isEmptyObject(newIntervals.interval)) {
+          $.extend(dataOptions, newIntervals);
+        }
+        // All others options             
+        return dataOptions;
+      }
+
+      /**
+       * Set options with all the different way
+       * options by priority order : jsOptions, dataOptions, configOptions
+       */
+      function setAllOptions(input) {
+        var configOptions = getConfigOptions(input.data('length-detector-class'));
+        var dataOptions = getDataOptions(input);
+        $.extend(options, configOptions, dataOptions, jsOptions);
+      }
+
+      /**
+       * Convert a string with the right syntax into an interval object
+       * 
+       * @param  String, string  ex: "50 success right length"
+       * @return Object
+       */
+      function intervalStringToObject(string){
+        var interval = {};
+
+        // Limit chars
+        interval.limitChars = string.substr(0, string.search(/ /));
+        string = string.replace(interval.limitChars+' ', '');
+
+        // Style
+        interval.bsClass = $.trim(string.match(/^([\w\d-]*|#.{3,6}|rgb\(.*\)|{.*})\s/)[0]);
+          // Convert into object if it's style sheet
+        if (interval.bsClass.search(/^{.*}$/) !== -1){
+          interval.bsClass = JSON.parse(interval.bsClass);
+        }
+
+        // Message
+        interval.message = string.replace(interval.bsClass+' ', '');
+
+        return interval;
+      }
 
       /**
       * Return the length of the specified input.
@@ -58,7 +127,6 @@
       */
       function inputLength(input) {
         var text = input.val();
-
         if (options.twoCharLinebreak) {
           // Count all line breaks as 2 characters
           text = text.replace(/\r(?!\n)|\n(?!\r)/g, '\r\n');
@@ -130,6 +198,7 @@
        * @return {number}
        */
       function charsLeftThreshold(input, thereshold, maxlength) {
+
         var output = true;
         if (!options.alwaysShow && (maxlength - inputLength(input) > thereshold)) {
           output = false;
@@ -150,13 +219,46 @@
       }
 
       /**
-       * Returns a bootstrap class label from the name
+       * Set the style of the lengthDetectorIndicator background
+       * It's possible to set the style of the div with styleOption = object
        * 
-       * @param  {[String]} color [bootstrap name]
-       * @return {[String]}       [Boostrap label]
+       * @param  mixed, (class, hexa, rgb, object)
+       * @return String, the new class
        */
-      function labelBoostrap(color){
-        return 'label label-'+color;
+      function style(styleOption, maxLengthIndicator){
+        var currentClass = 'label';
+
+        if ($.type(styleOption) !== 'undefined') {
+        
+          // Style sheet
+          if ($.type(styleOption) === 'object') {
+            
+            var styles = $.extend(maxLengthIndicator.attr('style'), styleOption);
+            maxLengthIndicator.css(styles);
+          } else {
+            // Reset the style
+            maxLengthIndicator.removeAttr('style').css({
+                display: 'none',
+                position: 'absolute',
+                whiteSpace: 'nowrap',
+                zIndex: 1099
+            });
+
+            // Color hexa for background
+            if (styleOption.search(/^(#.{3,6}|rgb\(.*\))/) !== -1 ) {
+              maxLengthIndicator.css('background-color', styleOption);
+            } 
+            // Class
+            else {
+              maxLengthIndicator.css('background-color', '');
+              currentClass += ' '+currentClass+'-'+styleOption;
+            }
+          }
+        } else {          
+          currentClass += ' '+currentClass+'-'+options.defaultClass;
+          console.error('No style defined for this interval.');
+        }
+        return currentClass;
       }
 
       /**
@@ -168,7 +270,7 @@
         indicator.css({
           display: 'block'
         });
-        currentInput.trigger('maxlength.shown');
+        currentInput.trigger('maxLength.shown');
       }
 
       /**
@@ -190,12 +292,16 @@
       * @param typedChars
       * @return String
       */
-      function updateMaxLengthHTML(maxLengthThisInput, typedChars) {
+      function updateMaxLengthHTML(currentInputText, maxLengthThisInput, typedChars, currentIntervalMessage) {
         var output = '';
         if (options.message) {
-          output = options.message.replace('%charsTyped%', typedChars)
+          if (typeof options.message === 'function') {
+            output = options.message(currentInputText, maxLengthThisInput);
+          } else {
+            output = options.message.replace('%charsTyped%', typedChars)
               .replace('%charsRemaining%', maxLengthThisInput - typedChars)
               .replace('%charsTotal%', maxLengthThisInput);
+          }
         } else {
           if (options.preText) {
             output += options.preText;
@@ -213,68 +319,94 @@
             output += options.postText;
           }
         }
+        if (currentIntervalMessage && !isMessageEmpty(currentIntervalMessage)) {
+          output += '. '+currentIntervalMessage;
+        }
+
         return output;
       }
 
       /**
        * Get the interval where the currentLength is
        * 
-       * @param  {[array]} arrayInterval
-       * @param  {[int]}   currentLength
-       * @return {[array]}
+       * @param  interval
+       * @param  currentLength
+       * @return array
        */
-      function getCurrentInterval(arrayInterval, currentLength){
+      function getCurrentInterval(interval, currentLength){
         var currentInterval = [];        
 
-        var previousMinChars = 0;
-        var nextMinChars;
-        var finded = 0; // used to get interval between index and index+1
+        // Interval is set
+        if (interval !== '') {
+          var previousMinChars = 0;
+          var nextMinChars;
+          var intervalFinded = false; // used to get interval between index and index+1
 
-        for (var index in arrayInterval) {
-          if (finded == 1 && currentLength <= index){
-            nextMinChars = index;
-            finded = 0;
-            break;
-          } else {
-            nextMinChars = 'undefined';
+          // For each interval 
+          $.each(interval, function(key, value) {
+            if (intervalFinded && currentLength <= value.limitChars){
+              nextMinChars = value.limitChars;
+              currentInterval = value;
+              return false;
+            } else {
+              currentInterval = 'undefined';
+            }
+
+            // Get the previous limit
+            if (currentLength > value.limitChars ) {              
+              previousMinChars = value.limitChars;
+              intervalFinded = true;
+            }
+          });
+
+          // Initate Interval
+          if (previousMinChars === 0) {
+            // Get the first interval
+            $.each(interval,function(key ,value) {
+              nextMinChars = value.limitChars;
+              currentInterval = value;
+              return false;
+            });
           }
-          if (currentLength > index ) {
-            previousMinChars = index;
-            finded = 1;
-          } 
+        } else {
+          currentInterval = 'undefined';
         }
-
-        // Initate Interval
-        if (previousMinChars == 0) {
-          for (var index in arrayInterval) {
-            nextMinChars = index;
-            break;
-          }
-        }
-
-        currentInterval[0] = previousMinChars;
-        currentInterval[1] = nextMinChars;
-
+        
         return currentInterval;
       }
 
-
-
       /**
-       * Convert a JSON into an array
+       * Order the options.interval with bubble sort
        * 
-       * @param  {[JSON]}
-       * @return {[array]}
+       * @param  Object, interval
+       * @return Object, 
        */
-      function objectToArray(object){
-        var array = [];
+      function sortInterval(interval){
 
-        $.map(object, function(value, key) {
-          array[key] = value;
-        });
-        return array;
+        var n = Object.keys(interval).length;
+        for (var i = n-1; i > 0; i--) {
+          for (var j = 0; j < i; j++) {
+            if (interval[j].limitChars > interval[j+1].limitChars) {
+
+              var tmp = {};
+              tmp = interval[j];
+              interval[j] = interval[j+1];
+              interval[j+1] = tmp;
+            }
+          }
+        }
+        return interval;
       }
 
+      /**
+       * Define if a string is empty
+       * 
+       * @param  String, message
+       * @return {Boolean}
+       */
+      function isMessageEmpty(message) {
+        return $.trim(message) === '' || message === 'undefined';
+      }
 
       /**
        * This function updates the value of the counter in the indicator.
@@ -286,49 +418,46 @@
        * @param maxLengthCurrentInput
        * @param maxLengthIndicator
        */
-      function manageRemainingVisibility(remaining, currentInput, maxLengthCurrentInput, maxLengthIndicator, currentInterval) {
-        maxLengthIndicator.html(updateMaxLengthHTML(maxLengthCurrentInput, (maxLengthCurrentInput - remaining)));
+      function manageRemainingVisibility(remaining, currentInput, maxLengthCurrentInput, maxLengthIndicator) {
         
-        var interval = options.interval,
-          currentLength = inputLength(currentInput),
-          currentInterval = getCurrentInterval(objectToArray(interval),currentLength),
-          previousMinChars = currentInterval[0],
-          nextMinChars = currentInterval[1];
+        if (maxLengthIndicator) {
 
-        if (remaining > 0) {
+          var currentInterval = getCurrentInterval(options.interval,inputLength(currentInput)),
+              currentBsClass;
+          maxLengthIndicator.html(updateMaxLengthHTML(currentInput.val(), maxLengthCurrentInput, (maxLengthCurrentInput - remaining), currentInterval.message));
+          
+          if (remaining > 0) {
+            
+            // Default
+            if (currentInterval === 'undefined' || options.interval === '') {
 
-          // Default
-          if (nextMinChars == 'undefined') {
-            if (charsLeftThreshold(currentInput, options.threshold, maxLengthCurrentInput)) {
-              showRemaining(currentInput, maxLengthIndicator.removeClass(options.limitReachedClass).removeClass(options.warningClass).addClass(labelBoostrap(options.warningClass)));
-            } else {
-              hideRemaining(currentInput, maxLengthIndicator);
-            }
-          } 
-          // When interval is defined
-          else {
-            // Good length
-            if (currentLength <= nextMinChars) {
               if (charsLeftThreshold(currentInput, options.threshold, maxLengthCurrentInput)) {
-                showRemaining(currentInput, maxLengthIndicator.removeClass(options.limitReachedClass).removeClass(options.warningClass).addClass(labelBoostrap(options.interval[nextMinChars])));
+                currentBsClass = style(options.defaultClass, maxLengthIndicator);
+                showRemaining(currentInput, maxLengthIndicator.removeClass(options.previousClass).addClass(currentBsClass));
+                options.previousClass = currentBsClass;
               } else {
                 hideRemaining(currentInput, maxLengthIndicator);
               }
-            } // Low length
-            else if (currentLength >= previousMinChars){
+            } 
+            // When interval is defined
+            else {
               if (charsLeftThreshold(currentInput, options.threshold, maxLengthCurrentInput)) {
-                showRemaining(currentInput, maxLengthIndicator.removeClass(options.limitReachedClass).removeClass(options.middleClass).addClass(labelBoostrap(options.interval[previousMinChars])));
+                currentBsClass = style(currentInterval.bsClass, maxLengthIndicator);
+                showRemaining(currentInput, maxLengthIndicator.removeClass(options.previousClass).addClass(currentBsClass));
+                options.previousClass = currentBsClass;
               } else {
                 hideRemaining(currentInput, maxLengthIndicator);
               }
             }
           }
+          // Max length
+          else {
+            currentBsClass = style(options.limitReachedClass, maxLengthIndicator);
+            showRemaining(currentInput, maxLengthIndicator.removeClass(options.previousClass).addClass(currentBsClass));
+            options.previousClass = currentBsClass;
+          }
         }
-        // Max length
-        else {
-          showRemaining(currentInput, maxLengthIndicator.removeClass(options.warningClass).removeClass(options.middleClass).addClass(options.limitReachedClass));
-        }
-        
+
         if (options.allowOverMax) {
           // class to use for form validation on custom maxlength attribute
           if (remaining < 0) {
@@ -338,7 +467,7 @@
           }
         }
       }
-  
+
       /**
        * This function returns an object containing all the
        * informations about the position of the current input
@@ -480,6 +609,7 @@
        */
       function getMaxLength(currentInput) {
         var attr = 'maxlength';
+
         if (options.allowOverMax) {
           attr = 'data-bs-mxl';
         }
@@ -504,11 +634,16 @@
         }
 
         function firstInit() {
-          var maxlengthContent = updateMaxLengthHTML(maxLengthCurrentInput, '0');
+
+          // Get options
+          setAllOptions(currentInput);
+
+          var maxlengthContent = updateMaxLengthHTML(currentInput.val(), maxLengthCurrentInput, '0', '');
           maxLengthCurrentInput = getMaxLength(currentInput);
+          sortInterval(options.interval);
 
           if (!maxLengthIndicator) {
-            maxLengthIndicator = $('<span class="bootstrap-length-detector"></span>').css({
+            maxLengthIndicator = $('<span class="length-detector"></span>').css({
               display: 'none',
               position: 'absolute',
               whiteSpace: 'nowrap',
@@ -541,6 +676,7 @@
           var remaining = remainingChars(currentInput, getMaxLength(currentInput));
           manageRemainingVisibility(remaining, currentInput, maxLengthCurrentInput, maxLengthIndicator);
           place(currentInput, maxLengthIndicator);
+
         }
 
         if (options.showOnReady) {
@@ -553,7 +689,7 @@
           });
         }
 
-        currentInput.on('lengthDetector.reposition', function () {
+        currentInput.on('maxLength.reposition', function () {
           place(currentInput, maxLengthIndicator);
         });
 
@@ -582,10 +718,7 @@
             manageRemainingVisibility(remaining, currentInput, maxLengthCurrentInput, maxLengthIndicator);
           }
 
-          //reposition the indicator if placement "bottom-right-inside" & "top-right-inside" is used
-          if (options.placement === 'bottom-right-inside' || options.placement === 'top-right-inside') {
-            place(currentInput, maxLengthIndicator);
-          }
+          place(currentInput, maxLengthIndicator);
 
           return output;
         });

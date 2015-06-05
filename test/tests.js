@@ -68,7 +68,6 @@ $(function () {
 
   test('Newlines are counted twice', function () {
     lengthDetectorInput.val('t\r\nt');
-
     lengthDetectorInput.lengthDetector();
     lengthDetectorInput.focus();
 
@@ -243,6 +242,9 @@ $(function () {
     ok(argsLength === 3, 'placement function option was called with expected number of arguments');
   });
 
+/**
+ * New features
+ */
   module('interval option', {
     setup: function () {
       lengthDetectorInput = $('<input type="text" maxlength="10"/>')
@@ -251,14 +253,14 @@ $(function () {
       lengthDetectorInput.lengthDetector({
         'interval': {
           0: {
-              "limitChars": 8,
-              "bsClass": "info",
-              "message" : "The right length." },
+              'limitChars': 8,
+              'bsClass': 'info',
+              'message' : 'The right length.' },
           1: {
-              "limitChars": 5,
-              "bsClass": "success",
-              "message" : "Way too short." }
-                    }});
+              'limitChars': 5,
+              'bsClass': 'success',
+              'message' : 'Way too short.' }
+        }});
     },
     teardown: function () {
       $('.length-detector').remove();
@@ -289,6 +291,12 @@ $(function () {
     ok($('.length-detector').html() === '8 / 10. The right length.', 'The second interval is correctly set');
   });
 
+  test('Get second interval', function () {
+    lengthDetectorInput.val('Interval');
+    lengthDetectorInput.focus();
+    ok($('.length-detector').html() === '8 / 10. The right length.', 'The second interval is correctly set');
+  });
+
 
   module('Setting options', {
     setup: function () {
@@ -305,7 +313,7 @@ $(function () {
 
   test('Data options', function () {
     lengthDetectorInput.data('interval-1', '5 success Way too short.');
-    console.log($('.length-detector').html());
+    lengthDetectorInput.focus();
     ok($('.length-detector').html() === '0 / 10. Way too short.', 'The data options is correctly set');
   });
 
@@ -314,6 +322,19 @@ $(function () {
     lengthDetectorInput.val('Hi, color');
     lengthDetectorInput.focus();
     ok($('.length-detector').html() === '9. Name info 10', 'The config options is correctly set');
+  });
+
+  test('Config not found', function () {
+    lengthDetectorInput.data('length-detector-class', 'home');
+    lengthDetectorInput.focus();
+    ok($('.length-detector').html() === '0 / 10', 'The config "home" is not loaded');
+  });
+
+  test('Error data-interval ', function () {
+    lengthDetectorInput.data('interval', '10 success Way too short.');
+    lengthDetectorInput.val('Hi, color');
+    lengthDetectorInput.focus();
+    ok($('.length-detector').html() === '9 / 10', 'The interval is not set');
   });
 
 
@@ -325,10 +346,13 @@ $(function () {
       lengthDetectorInput.lengthDetector({
         'interval': {
             0: {
-                "limitChars": 8,
-                "bsClass": "info",
-                "message" : "The right length."
-              }
+                'limitChars': 8,
+                'bsClass': 'info',
+                'message' : 'The right length.'
+              },
+            1: {
+                'limitChars': 10,
+            }
           }
       });
     },
@@ -339,18 +363,15 @@ $(function () {
   });
 
   test('Js options', function () {
-    lengthDetectorInput.lengthDetector({
-      'interval': {
-          0: {
-              "limitChars": 8,
-              "bsClass": "info",
-              "message" : "The right length."
-            }
-        }
-    });
     lengthDetectorInput.val('Hi');
     lengthDetectorInput.focus();
     ok($('.length-detector').html() === '2 / 10. The right length.', 'Js options set correctly');
+  });
+
+  test('Error no style defined for an interval', function () {
+    lengthDetectorInput.val('Hi, color');
+    lengthDetectorInput.focus();
+    ok($('.length-detector').hasClass('label-warning'), 'No style defined for the interval.');
   });
 
   test('All options set', function () {    
@@ -377,38 +398,19 @@ $(function () {
   test('Hexa background color', function () {    
     lengthDetectorInput.data('interval-1', '5 #0540FE Way too short.');
     lengthDetectorInput.focus();
-    ok($('.length-detector').css( "background-color" ) === 'rgb(5, 64, 254)', 'The background-color is correctly set.');
+    ok($('.length-detector').css('background-color') === 'rgb(5, 64, 254)', 'The background-color is correctly set.');
   });
 
   test('Rgb background color', function () {    
     lengthDetectorInput.data('interval-1', '5 rgb(5, 64, 254) Way too short.');
     lengthDetectorInput.focus();
-    ok($('.length-detector').css( "background-color" ) === 'rgb(5, 64, 254)', 'The background-color is correctly set.');
+    ok($('.length-detector').css('background-color') === 'rgb(5, 64, 254)', 'The background-color is correctly set.');
   });
 
-  module('Setting style sheet in indicator', {
-    setup: function () {
-      lengthDetectorInput = $('<input type="text" maxlength="10"/>')
-        .appendTo('#qunit-fixture');
-
-      lengthDetectorInput.lengthDetector({
-        'interval': {
-          0: {
-            "limitChars": 8,
-            "bsClass": {'color': 'red'}
-          }
-        }
-      });
-
-    },
-    teardown: function () {
-      $('.length-detector').remove();
-      $('#qunit-fixture').empty();
-    }
-  });
-  test('Style sheet', function () {
+  test('Style sheet background color', function () {    
+    lengthDetectorInput.data('interval-1', '5 {"color": "red"} Way too short.');
     lengthDetectorInput.focus();
-    ok($('.length-detector').css( "color" ) === 'rgb(255, 0, 0)', 'The background-color is correctly set.');
+    ok($('.length-detector').css('color') === 'rgb(255, 0, 0)', 'The background-color is correctly set.');
   });
 
 });

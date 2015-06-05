@@ -1,12 +1,13 @@
 (function($){
+    'use strict';
     $.fn.configs = function(){
     };
     $.configs = {
         defaults: function(){
             $.configs.defaults = {
-                'showOnReady': false, // true to always show when indicator is ready
-                'alwaysShow': false, // if true the indicator it's always shown.
-                'threshold': 10, // Represents how many chars left are needed to show up the counter
+                'showOnReady': false,
+                'alwaysShow': true,
+                'threshold': 10,
                 'interval': '',
                 'defaultClass': 'warning',
                 'limitReachedClass': 'danger label-important',
@@ -14,46 +15,41 @@
                 'preText': '',
                 'postText': '',
                 'showMaxLength': true,
-                'placement': 'bottom',
-                'message': null, // an alternative way to provide the message text
-                'showCharsTyped': true, // show the number of characters typed and not the number of characters remaining
-                'validate': false, // if the browser doesn't support the maxlength attribute, attempt to type more than
-                // the indicated chars, will be prevented.
-                'utf8': false, // counts using bytesize rather than length. eg: '£' is counted as 2 characters.
-                'appendToParent': false, // append the indicator to the input field's parent instead of body
-                'twoCharLinebreak': true,  // count linebreak as 2 characters to match IE/Chrome textarea validation. As well as DB storage.
-                'allowOverMax': false,  // false = use maxlength attribute and browswer functionality.
+                'placement': 'bottom-right-inside',
+                'message': null,
+                'showCharsTyped': true,
+                'validate': false,
+                'utf8': false,
+                'appendToParent': false,
+                'twoCharLinebreak': true,
+                'allowOverMax': false,
                 'previousClass': '',
             },
-            $.configs.textarea = {
+            $.configs.title = {
                 "showOnReady": false,
                 "alwaysShow": true,
                 "threshold": 10,
                 "interval": {
                     0: {
-                        "limitChars": 5,
-                        "bsClass": "#003d4c",
-                        "message" : "Beaucoup trop court."
+                        "limitChars": 15,
+                        "bsClass": "danger",
+                        "message" : "Too short."
                     },
                     1: {
-                        "limitChars": 10,
-                        "bsClass": {
-                            'color': 'red',
-                            'background-color': 'black'
-                        },
-                        "message" : "Un peu mieux"
+                        "limitChars": 60,
+                        "bsClass": 'warning',
+                        "message" : "Could be better."
                     },
                     2: {
-                        "limitChars": 11,
-                        "bsClass": "info",
-                        "message" : "Voilà, c'est la bonne longeur"
+                        "limitChars": 90,
+                        "bsClass": "success",
+                        "message" : "This is the right length."
                     },
                     3: {
-                        "limitChars": 18,
-                        "bsClass": "default",
-                        "message" : "Trop long"
-                    },
-                    
+                        "limitChars": 110,
+                        "bsClass": "warning",
+                        "message" : "Too Long"
+                    },                    
                 },
                 "previousClass": '',
                 "defaultClass": 'warning',
@@ -70,22 +66,31 @@
                 "twoCharLinebreak": true,
                 "allowOverMax": false
             },
-            $.configs.test = {
+            $.configs.metaDescription = {
                 "showOnReady": false,
                 "alwaysShow": true,
                 "threshold": 10,
                 "interval": {
                     0: {
-                        "limitChars": 5,
-                        "bsClass": "success",
-                        "message" : "Name success 5"
+                        "limitChars": 15,
+                        "bsClass": "danger",
+                        "message" : "Too short."
                     },
                     1: {
-                        "limitChars": 10,
-                        "bsClass": "info",
-                        "message" : "Name info 10"
-                    }
-                    
+                        "limitChars": 70,
+                        "bsClass": 'warning',
+                        "message" : "Could be better."
+                    },
+                    2: {
+                        "limitChars": 110,
+                        "bsClass": "success",
+                        "message" : "This is the right length."
+                    },
+                    3: {
+                        "limitChars": 139,
+                        "bsClass": "warning",
+                        "message" : "Too Long"
+                    },                      
                 },
                 "previousClass": '',
                 "defaultClass": 'warning',
@@ -93,7 +98,7 @@
                 "separator": ' / ',
                 "preText": '',
                 "postText": '',
-                "showMaxLength": false,
+                "showMaxLength": true,
                 "placement": 'bottom-right-inside',
                 "message": null,
                 "showCharsTyped": true,
