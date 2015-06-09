@@ -27,10 +27,10 @@ The indicator badge shows up on focusing on the element, and disappears when the
    * Possible string values are: **bottom** ( *default option* ), **left**, **top**, **right**, **bottom-right**, **top-right**, **top-left**, **bottom-left** and **centered-right**.
    * Custom placements can be passed as an object, with keys **top**, **right**, **bottom**, **left**, and **position**. These are passed to $.fn.css.
    * A custom function may also be passed. This method is invoked with the {$element} Current Input, the {$element} MaxLength Indicator, and the Current Input's Position {bottom height left right top width}.
- * **interval**: (Object) Define some interval of caract typed with their own style and message. To set an interval you have to set a limitChars and a bsClass
- * limitChars: Nombre de caractères limite pour cette intervalle.
- * bsClass: (String, Hexa, Object) Define the style of the length detector indicator
- * message: message to display for the interval
+ * **interval**: (Object) Define some interval of caract typed with their own style and message. To set an interval you have to set a limitChars and a bsClass.
+ 	* limitChars: Number of characters limit to the interval.
+ 	* bsClass: (String, Hexa, Object) Define the style of the length detector indicator
+ 	* message: Message to display for the interval
 
 ## Events
 
