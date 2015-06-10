@@ -24,7 +24,7 @@
                 'twoCharLinebreak': true,
                 'allowOverMax': false,
                 'previousClass': '',
-            },
+            };
             $.configs.title = {
                 "showOnReady": false,
                 "alwaysShow": true,
@@ -65,7 +65,7 @@
                 "appendToParent": false,
                 "twoCharLinebreak": true,
                 "allowOverMax": false
-            },
+            };
             $.configs.metaDescription = {
                 "showOnReady": false,
                 "alwaysShow": true,
@@ -106,7 +106,7 @@
                 "appendToParent": false,
                 "twoCharLinebreak": true,
                 "allowOverMax": false
-            }
+            };
         }
     };
     $.configs.defaults();

@@ -90,7 +90,7 @@
       function setAllOptions(input) {
         var configOptions = getConfigOptions(input.data('length-detector-class'));
         var dataOptions = getDataOptions(input);
-        $.extend(options, configOptions, dataOptions, jsOptions);
+        options = $.extend({}, options, configOptions, dataOptions, jsOptions);
       }
 
       /**
@@ -232,7 +232,6 @@
         
           // Style sheet
           if ($.type(styleOption) === 'object') {
-            
             var styles = $.extend(maxLengthIndicator.attr('style'), styleOption);
             maxLengthIndicator.css(styles);
           } else {
@@ -293,7 +292,7 @@
       * @return String
       */
       function updateMaxLengthHTML(currentInputText, maxLengthThisInput, typedChars, currentIntervalMessage) {
-        var output = '';
+        var output = '<span style="font-size:125%">';
         if (options.message) {
           if (typeof options.message === 'function') {
             output = options.message(currentInputText, maxLengthThisInput);
@@ -320,7 +319,7 @@
           }
         }
         if (currentIntervalMessage && !isMessageEmpty(currentIntervalMessage)) {
-          output += '. '+currentIntervalMessage;
+          output += '. </span>'+currentIntervalMessage;
         }
 
         return output;
@@ -371,7 +370,6 @@
         } else {
           currentInterval = 'undefined';
         }
-        
         return currentInterval;
       }
 
@@ -694,17 +692,17 @@
         });
 
 
-        currentInput.on('destroyed', function () {
-          if (maxLengthIndicator) {
-            maxLengthIndicator.remove();
-          }
-        });
+        // currentInput.on('destroyed', function () {
+        //   if (maxLengthIndicator) {
+        //     maxLengthIndicator.remove();
+        //   }
+        // });
 
-        currentInput.on('blur', function () {
-          if (maxLengthIndicator && !options.showOnReady) {
-            maxLengthIndicator.remove();
-          }
-        });
+        // currentInput.on('blur', function () {
+        //   if (maxLengthIndicator && !options.showOnReady) {
+        //     maxLengthIndicator.remove();
+        //   }
+        // });
 
         currentInput.on('input', function () {
           var maxlength = getMaxLength(currentInput),
