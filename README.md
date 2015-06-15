@@ -1,18 +1,16 @@
-# [Bootstrap MaxLength](http://mimo84.github.com/bootstrap-maxlength/) [![Build Status](https://travis-ci.org/mimo84/bootstrap-maxlength.png?branch=master)](https://travis-ci.org/mimo84/bootstrap-maxlength) [![Total views](https://sourcegraph.com/api/repos/github.com/mimo84/bootstrap-maxlength/counters/views.png)](https://sourcegraph.com/github.com/mimo84/bootstrap-maxlength)
+# [Bootstrap Length Detector](http://github.com/clementGoachet/bootstrap-length-detector/)
 
 
-This plugin integrates by default with Twitter bootstrap using badges to display the maximum length of the field where the user is inserting text.
-This plugin uses the HTML5 attribute "maxlength" to work.
+This plugin integrates by default with Twitter bootstrap using badges to display the maximum length of the field and a custom style and message where the user is inserting text. It's based on [Maxlength](https://github.com/mimo84/bootstrap-maxlength/).
+This plugin uses the class "length-detector" to work.
 
 The indicator badge shows up on focusing on the element, and disappears when the focus is lost.
-
-[![Donate](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=4DVL2K9LZW6YL)
 
 ## Configurable options
 
  * **alwaysShow**: if true the threshold will be ignored and the remaining length indication will be always showing up while typing or on focus on the input. Default: false.
  * **threshold**: this is a number indicating how many chars are left to start displaying the indications. Default: 10.
- * **warningClass**: it's the class of the element with the indicator. By default is the bootstrap "label label-success" but can be changed to anything you'd like.
+ * **defaultClass**: it's the class of the element with the indicator when the interval is not defined. By default is the bootstrap "warning" but can be changed to anything you'd like.
  * **limitReachedClass**: it's the class the element gets when the limit is reached. Default is "label label-important label-danger" (to support Bootstrap 2 and 3).
  * **separator**: represents the separator between the number of typed chars and total number of available chars. Default is "/".
  * **preText**: is a string of text that can be outputted in front of the indicator. preText is empty by default.
@@ -29,7 +27,10 @@ The indicator badge shows up on focusing on the element, and disappears when the
    * Possible string values are: **bottom** ( *default option* ), **left**, **top**, **right**, **bottom-right**, **top-right**, **top-left**, **bottom-left** and **centered-right**.
    * Custom placements can be passed as an object, with keys **top**, **right**, **bottom**, **left**, and **position**. These are passed to $.fn.css.
    * A custom function may also be passed. This method is invoked with the {$element} Current Input, the {$element} MaxLength Indicator, and the Current Input's Position {bottom height left right top width}.
-
+ * **interval**: (Object) Define some interval of caract typed with their own style and message. To set an interval you have to set a limitChars and a bsClass.
+ 	* limitChars: Number of characters limit to the interval.
+ 	* bsClass: (String, Hexa, Object) Define the style of the length detector indicator
+ 	* message: Message to display for the interval
 
 ## Events
 
@@ -41,23 +42,23 @@ The indicator badge shows up on focusing on the element, and disappears when the
 
 Basic implementation:
 ```javascript
-$('input[maxlength]').maxlength();
+$('.length-detector').lengthDetector();
 ```
 
 Change the threshold value:
 ```javascript
-$('input.className').maxlength({
+$('input.length-detector').lengthDetector({
     threshold: 20
 });
 ```
 
 An example with some of the configurable options:
 ```javascript
-$('input.className').maxlength({
+$('input.length-detector').lengthDetector({
     alwaysShow: true,
     threshold: 10,
-    warningClass: "label label-info",
-    limitReachedClass: "label label-warning",
+    defaultClass: "info",
+    limitReachedClass: "warning",
     placement: 'top',
     preText: 'used ',
     separator: ' of ',
@@ -68,11 +69,11 @@ $('input.className').maxlength({
 The same example using the message option:
 
 ```javascript
-$('input.className').maxlength({
+$('input.length-detector').lengthDetector({
     alwaysShow: true,
     threshold: 10,
-    warningClass: "label label-info",
-    limitReachedClass: "label label-warning",
+    warningClass: "info",
+    limitReachedClass: "warning",
     placement: 'top',
     message: 'used %charsTyped% of %charsTotal% chars.'
 });
@@ -85,7 +86,7 @@ An example allowing user to enter over max characters. Sample HTML element:
 
 ```javascript
 // Setup maxlength
-$('.form-control').maxlength({
+$('.form-control').lengthDetector({
 	alwaysShow: true,
 	validate: false,
 	allowOverMax: true
@@ -112,55 +113,49 @@ $('textarea').on('autosize.resized', function() {
 });
 ```
 
-## Changelog
+Differents way to set intervals.
+with JavaScript
+```javascript
+$('input.length-detector').lengthDetector({
+	interval: {
+		0: {
+			limitChars: 10,
+			bsClass: 'warning'
+		},
+		1: {
+			limitChars: 20,
+			bsClass: 'success',
+			message: 'Right length !'
+		}
+});
+```
 
-### 1.6.0
-* Added new custom events: maxlength.reposition, maxlength.shown, maxlength.hidden. Thanks to dr-nick.
-* Buped up required jQuery to 1.9.x
-* Added option `placement` for custom placement handler. Thanks to Kreegr
-* Extended `message` option. Now it can also be optionally a function. Thanks to Vincent Pizzo
+with Data attributes
+```javascript
+$('input.length-detector').lengthDetector();
+```
+```html
+<input class="length-detector" maxlength="20" data-separator=" | " data-placement="bottom-right-inside"/>
+```
 
-### 1.5.7
-*   Fixed issue with bower
+with Config files
+```javascript
+$('input.length-detector').lengthDetector();
+```
+```html
+<input class="length-detector" maxlength="110" data-length-detector-class="title"/>
+```
 
-### 1.5.6
-*   Added over maxlength functionality with customMaxAttribute
-*   Added twoCharLinebreak option
-
-### 1.5.5
-*   Implemented input event rather than keydown to improve usability
-*   Fixed jshint, jscs errors
-
-### 1.5.4
-
-*   When an input with associated maxlength element is removed, maxlength is also removed.
-
-### 1.5.3
-
-*   Fixed #40, error on resize event.
-
-### 1.5.2
-
-*   Fixed #44 (pasted text in can cause it to go over the max length)
-
-### 1.5.1
-
-*   Added self protection of multiple focus events
-*   Added back detection of window resizing
-
-### 1.5.0
-
-*   Removed window.resize event
-*   Maxlength is created and destroyed each time
-*   Fixed Doesn't update the limit after input's maxlength attribute was changed [#31](https://github.com/mimo84/bootstrap-maxlength/issues/31)
-*   Added Gruntfile
-*   Added qunit unit tests
-
-### 1.4.2
-
-* Fixed issue with counting when the user moves with shift+tab keyboard shortcut.
-* Replaced the warningClass limitReachedClass options to use labels rather than badges for Bootstrap 3.0 better compatibility.
-
-### 1.4.1
-
-* Added support for TAB key when the maxlength is reached.
+If the default Boostrap label doesn't suit you, you can define your style for an interval.
+```javascript
+$('input.length-detector').lengthDetector({
+	interval: {
+		0: {
+			limitChars: 10,
+			bsClass: {
+				background-color: '#6495ED',
+				color => 'midnightblue'
+			}
+		},
+});
+```

@@ -1,11 +1,11 @@
 {
-  "name": "bootstrap-maxlength",
+  "name": "bootstrap-length-detector",
   "version": "1.6.0",
   "description": "An visual feedback indicator for the MaxLength attribute",
-  "main": "bootstrap-maxlength.js",
+  "main": "bootstrap-length-detector.js",
   "repository": {
     "type": "git",
-    "url": "git://github.com/mimo84/bootstrap-maxlength.git"
+    "url": "git://github.com/clementGoachet/bootstrap-length-detector"
   },
   "keywords": [
     "form",
@@ -16,7 +16,7 @@
     "jquery-plugin",
     "jquery"
   ],
-  "author": "Maurizio Napoleoni @mimonap",
+  "author": "Goachet clément",
   "licenses": [
     {
       "type": "MIT License",

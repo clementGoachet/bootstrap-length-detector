@@ -1,6 +1,6 @@
 {
-    "name": "bootstrap-maxlength",
-    "title": "BootStrap Maxlength",
+    "name": "bootstrap-length-detector",
+    "title": "BootStrap Length Detector",
     "description": "jQuery and Bootstrap plugin for character count on inputs",
     "keywords": [
         "count",
