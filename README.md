@@ -1,4 +1,4 @@
-# [Bootstrap MaxLength](http://github.com/clementGoachet/bootstrap-length-detector/)
+# [Bootstrap Length Detector](http://github.com/clementGoachet/bootstrap-length-detector/)
 
 
 This plugin integrates by default with Twitter bootstrap using badges to display the maximum length of the field and a custom style and message where the user is inserting text. It's based on [Maxlength](https://github.com/mimo84/bootstrap-maxlength/).
